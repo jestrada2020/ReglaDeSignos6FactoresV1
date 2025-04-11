@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador de Regla de Signos</title>
+    <style>
+        /* Estilos CSS (sin cambios) */
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #6b8cae;
+            --accent-color: #ff6b6b;
+            --text-color: #333333;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --border-color: #e0e5ec;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --error-color: #f44336;
+        }
+        [data-theme="dark"] {
+            --primary-color: #5b8ad6;
+            --secondary-color: #7d9ec5;
+            --accent-color: #ff7e7e;
+            --text-color: #e0e0e0;
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --border-color: #333333;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        .theme-toggle {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        .theme-toggle:hover {
+            background-color: var(--secondary-color);
+        }
+        .step-container {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+        }
+        .step-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+        }
+        .step-number {
+            background-color: var(--primary-color);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-weight: bold;
+        }
+        .factors-selection {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .factor-btn {
+            padding: 12px 24px;
+            background-color: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .factor-btn:hover {
+            border-color: var(--primary-color);
+        }
+        .factor-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        .factors-input {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 16px;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.2);
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+        }
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--border-color);
+            color: var(--text-color);
+        }
+        .btn-outline:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .display-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .results-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .sign-table-container, .graph-container {
+            flex: 1;
+            min-width: 300px;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+        }
+        .sign-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .sign-table th, .sign-table td {
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            text-align: center;
+        }
+        .sign-table th {
+            background-color: rgba(74, 111, 165, 0.1);
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        .sign-table tr:nth-child(even) {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+        .sign-table .factor-row {
+            font-weight: 600;
+        }
+        .sign-table .result-row {
+            background-color: rgba(74, 111, 165, 0.1);
+            font-weight: 600;
+        }
+        .positive {
+            color: var(--success-color);
+        }
+        .negative {
+            color: var(--error-color);
+        }
+        .warning {
+            color: var(--warning-color);
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .hidden {
+            display: none;
+        }
+        .interval-label {
+            font-size: 14px;
+            color: var(--secondary-color);
+        }
+        .canvas-container {
+            width: 100%;
+            height: 300px;
+            position: relative;
+        }
+        @media (max-width: 768px) {
+            .factors-selection, .factors-input {
+                flex-direction: column;
+            }
+            .input-group {
+                width: 100%;
+            }
+            .actions, .display-options {
+                flex-wrap: wrap;
+            }
+            .btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+        /* Estilos para el tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--primary-color) transparent transparent transparent;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        /* Animaciones */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .loading::after {
+            content: "";
+            width: 30px;
+            height: 30px;
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1>Analizador de Regla de Signos</h1>
+                <p>Herramienta educativa para analizar inecuaciones mediante la regla de los signos</p>
+            </div>
+            <button id="themeToggle" class="theme-toggle">Cambiar Tema</button>
+        </header>
+        <div class="step-container">
+            <div class="step-title">
+                <div class="step-number">1</div>
+                <h2>Selecciona el número de factores</h2>
+            </div>
+            <div class="factors-selection">
+                <button class="factor-btn" data-factors="1">1 Factor</button>
+                <button class="factor-btn" data-factors="2">2 Factores</button>
+                <button class="factor-btn" data-factors="3">3 Factores</button>
+                <button class="factor-btn" data-factors="4">4 Factores</button>
+                <button class="factor-btn" data-factors="5">5 Factores</button>
+                <button class="factor-btn" data-factors="6">6 Factores</button>
+            </div>
+        </div>
+        <div id="inputContainer" class="step-container hidden">
+            <div class="step-title">
+                <div class="step-number">2</div>
+                <h2>Ingresa los factores</h2>
+            </div>
+            <div id="factorsInputs" class="factors-input">
+                <!-- Los inputs se generarán dinámicamente aquí -->
+            </div>
+            <div class="actions">
+                <button id="analyzeBtn" class="btn btn-primary">Analizar</button>
+                <button id="resetBtn" class="btn btn-outline">Reiniciar</button>
+                <button id="cifrasBtn" class="btn btn-outline">Cifras Significativas</button>
+            </div>
+        </div>
+        <div id="resultsContainer" class="step-container hidden">
+            <div class="step-title">
+                <div class="step-number">3</div>
+                <h2>Resultados</h2>
+            </div>
+            <div class="display-options">
+                <button id="showBothBtn" class="btn btn-outline active">Mostrar Ambos</button>
+                <button id="showTableBtn" class="btn btn-outline">Solo Tabla</button>
+                <button id="showGraphBtn" class="btn btn-outline">Solo Gráfica</button>
+                <button id="exportPDFBtn" class="btn btn-primary">Exportar PDF</button>
+            </div>
+            <div class="results-container">
+                <div id="signTableContainer" class="sign-table-container">
+                    <h3>Tabla de Signos</h3>
+                    <div id="signTableWrapper">
+                        <!-- La tabla se generará dinámicamente aquí -->
+                    </div>
+                </div>
+                <div id="graphContainer" class="graph-container">
+                    <h3>Gráfica del Producto</h3>
+                    <div class="canvas-container">
+                        <canvas id="graphCanvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        // Variables globales
+        let selectedFactors = 0;
+        let factors = [];
+        let currentTheme = 'light';
+        let chart = null;
+        let significantDigits = 3;
+
+        // Referencias a elementos DOM
+        const themeToggle = document.getElementById('themeToggle');
+        const factorBtns = document.querySelectorAll('.factor-btn');
+        const inputContainer = document.getElementById('inputContainer');
+        const factorsInputs = document.getElementById('factorsInputs');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const cifrasBtn = document.getElementById('cifrasBtn');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const signTableWrapper = document.getElementById('signTableWrapper');
+        const signTableContainer = document.getElementById('signTableContainer');
+        const graphContainer = document.getElementById('graphContainer');
+        const graphCanvas = document.getElementById('graphCanvas');
+        const showBothBtn = document.getElementById('showBothBtn');
+        const showTableBtn = document.getElementById('showTableBtn');
+        const showGraphBtn = document.getElementById('showGraphBtn');
+        const exportPDFBtn = document.getElementById('exportPDFBtn');
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function () {
+            initEventListeners();
+        });
+
+        // Configuración de eventos
+        function initEventListeners() {
+            // Cambio de tema
+            themeToggle.addEventListener('click', toggleTheme);
+
+            // Selección de número de factores
+            factorBtns.forEach(btn => {
+                btn.addEventListener('click', function () {
+                    factorBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    selectedFactors = parseInt(this.getAttribute('data-factors'));
+                    setupInputs(selectedFactors);
+                    inputContainer.classList.remove('hidden');
+                    resultsContainer.classList.add('hidden');
+                });
+            });
+
+            // Eventos de botones
+            analyzeBtn.addEventListener('click', analyzeFactors);
+            resetBtn.addEventListener('click', resetApplication);
+            cifrasBtn.addEventListener('click', adjustSignificantDigits);
+
+            // Opciones de visualización
+            showBothBtn.addEventListener('click', () => setDisplayOption('both'));
+            showTableBtn.addEventListener('click', () => setDisplayOption('table'));
+            showGraphBtn.addEventListener('click', () => setDisplayOption('graph'));
+
+            // Exportar PDF
+            exportPDFBtn.addEventListener('click', exportToPDF);
+        }
+
+        // Configuración de inputs según el número de factores
+        function setupInputs(factorCount) {
+            factorsInputs.innerHTML = '';
+            for (let i = 1; i <= factorCount; i++) {
+                const inputGroup = document.createElement('div');
+                inputGroup.className = 'input-group';
+
+                const typeLabel = document.createElement('label');
+                typeLabel.textContent = `Factor ${i}:`;
+                inputGroup.appendChild(typeLabel);
+
+                const typeSelect = document.createElement('select');
+                typeSelect.id = `factor${i}type`;
+                const linearOption = document.createElement('option');
+                linearOption.value = 'linear';
+                linearOption.textContent = 'Lineal (ax + b)';
+                const quadraticOption = document.createElement('option');
+                quadraticOption.value = 'quadratic';
+                quadraticOption.textContent = 'Cuadrático (ax² + bx + c)';
+                typeSelect.appendChild(linearOption);
+                typeSelect.appendChild(quadraticOption);
+                inputGroup.appendChild(typeSelect);
+
+                const divInputs = document.createElement('div');
+                divInputs.id = `factor${i}inputs`;
+                inputGroup.appendChild(divInputs);
+
+                typeSelect.addEventListener('change', () => updateFactorInputs(i));
+
+                factorsInputs.appendChild(inputGroup);
+                updateFactorInputs(i);
+            }
+        }
+
+        // Actualizar inputs según el tipo de factor
+        function updateFactorInputs(index) {
+            const typeSelect = document.getElementById(`factor${index}type`);
+            const divInputs = document.getElementById(`factor${index}inputs`);
+            divInputs.innerHTML = '';
+
+            if (typeSelect.value === 'linear') {
+                const labelA = document.createElement('label');
+                labelA.textContent = `Coeficiente a (x):`;
+                const inputA = document.createElement('input');
+                inputA.type = 'number';
+                inputA.id = `factor${index}a`;
+                inputA.placeholder = 'Coeficiente a';
+
+                const labelB = document.createElement('label');
+                labelB.textContent = `Coeficiente b (constante):`;
+                const inputB = document.createElement('input');
+                inputB.type = 'number';
+                inputB.id = `factor${index}b`;
+                inputB.placeholder = 'Coeficiente b';
+
+                divInputs.appendChild(labelA);
+                divInputs.appendChild(inputA);
+                divInputs.appendChild(labelB);
+                divInputs.appendChild(inputB);
+            } else if (typeSelect.value === 'quadratic') {
+                const labelA = document.createElement('label');
+                labelA.textContent = `Coeficiente a (x²):`;
+                const inputA = document.createElement('input');
+                inputA.type = 'number';
+                inputA.id = `factor${index}a`;
+                inputA.placeholder = 'Coeficiente a';
+
+                const labelB = document.createElement('label');
+                labelB.textContent = `Coeficiente b (x):`;
+                const inputB = document.createElement('input');
+                inputB.type = 'number';
+                inputB.id = `factor${index}b`;
+                inputB.placeholder = 'Coeficiente b';
+
+                const labelC = document.createElement('label');
+                labelC.textContent = `Coeficiente c (constante):`;
+                const inputC = document.createElement('input');
+                inputC.type = 'number';
+                inputC.id = `factor${index}c`;
+                inputC.placeholder = 'Coeficiente c';
+
+                divInputs.appendChild(labelA);
+                divInputs.appendChild(inputA);
+                divInputs.appendChild(labelB);
+                divInputs.appendChild(inputB);
+                divInputs.appendChild(labelC);
+                divInputs.appendChild(inputC);
+            }
+        }
+
+        // Cambiar entre tema claro y oscuro
+        function toggleTheme() {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', currentTheme);
+            themeToggle.textContent = currentTheme === 'light' ? 'Cambiar a Oscuro' : 'Cambiar a Claro';
+
+            // Actualizar gráfica si existe
+            if (chart) {
+                updateChartTheme();
+            }
+        }
+
+        // Actualizar tema de la gráfica
+        function updateChartTheme() {
+            const textColor = currentTheme === 'light' ? '#333333' : '#e0e0e0';
+            const gridColor = currentTheme === 'light' ? '#e0e5ec' : '#333333';
+            chart.options.scales.x.grid.color = gridColor;
+            chart.options.scales.x.ticks.color = textColor;
+            chart.options.scales.y.grid.color = gridColor;
+            chart.options.scales.y.ticks.color = textColor;
+            chart.update();
+        }
+
+        // Analizar los factores
+        function analyzeFactors() {
+            // Validar inputs
+            if (!validateInputs()) {
+                alert('Por favor, ingresa todos los valores correctamente.');
+                return;
+            }
+
+            // Recopilar los factores ingresados
+            factors = [];
+            for (let i = 1; i <= selectedFactors; i++) {
+                const type = document.getElementById(`factor${i}type`).value;
+                const a = parseFloat(document.getElementById(`factor${i}a`).value);
+                const b = parseFloat(document.getElementById(`factor${i}b`).value);
+                const c = type === 'quadratic' ? parseFloat(document.getElementById(`factor${i}c`).value) : null;
+
+                if (type === 'quadratic') {
+                    const discriminant = b * b - 4 * a * c;
+                    if (discriminant >= 0) {
+                        alert(`El factor cuadrático ${i} no es irreducible (discriminante ≥ 0).`);
+                        return;
+                    }
+                }
+
+                factors.push({ type, a, b, c });
+            }
+
+            // Calcular los ceros (solo para factores lineales)
+            const zeros = factors
+                .filter(factor => factor.type === 'linear')
+                .map(({ a, b }) => (-b / a));
+
+            // Generar los resultados
+            generateSignTable(zeros, factors);
+            generateGraph(zeros, factors);
+
+            // Mostrar los resultados
+            resultsContainer.classList.remove('hidden');
+            resultsContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Validar los inputs
+        function validateInputs() {
+            let valid = true;
+            for (let i = 1; i <= selectedFactors; i++) {
+                const type = document.getElementById(`factor${i}type`).value;
+                const a = parseFloat(document.getElementById(`factor${i}a`).value);
+                const b = parseFloat(document.getElementById(`factor${i}b`).value);
+                const c = type === 'quadratic' ? parseFloat(document.getElementById(`factor${i}c`).value) : null;
+
+                if (isNaN(a) || isNaN(b) || (type === 'quadratic' && isNaN(c))) {
+                    valid = false;
+                    document.getElementById(`factor${i}a`).style.borderColor = 'var(--error-color)';
+                    document.getElementById(`factor${i}b`).style.borderColor = 'var(--error-color)';
+                    if (type === 'quadratic') {
+                        document.getElementById(`factor${i}c`).style.borderColor = 'var(--error-color)';
+                    }
+                } else {
+                    document.getElementById(`factor${i}a`).style.borderColor = 'var(--border-color)';
+                    document.getElementById(`factor${i}b`).style.borderColor = 'var(--border-color)';
+                    if (type === 'quadratic') {
+                        document.getElementById(`factor${i}c`).style.borderColor = 'var(--border-color)';
+                    }
+                }
+            }
+            return valid;
+        }
+
+        // Generar la tabla de signos
+        function generateSignTable(zeros, factors) {
+            // Ordenar los ceros de menor a mayor
+            const sortedZeros = [...zeros].sort((a, b) => a - b);
+
+            // Construir los intervalos
+            const intervals = [];
+            intervals.push(`(-∞, ${sortedZeros[0].toFixed(significantDigits)})`);
+            for (let i = 0; i < sortedZeros.length - 1; i++) {
+                intervals.push(
+                    `(${sortedZeros[i].toFixed(significantDigits)}, ${sortedZeros[i + 1].toFixed(significantDigits)})`
+                );
+            }
+            intervals.push(`(${sortedZeros[sortedZeros.length - 1].toFixed(significantDigits)}, +∞)`);
+
+            // Construir la tabla
+            const table = document.createElement('table');
+            table.className = 'sign-table';
+
+            // Encabezado con intervalos
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            const cornerHeader = document.createElement('th');
+            cornerHeader.textContent = 'Factor / Intervalo';
+            headerRow.appendChild(cornerHeader);
+            intervals.forEach(interval => {
+                const th = document.createElement('th');
+                th.textContent = interval;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            // Cuerpo de la tabla
+            const tbody = document.createElement('tbody');
+
+            // Filas para cada factor
+            const signsMatrix = [];
+            factors.forEach((factor, factorIndex) => {
+                const row = document.createElement('tr');
+                row.className = 'factor-row';
+
+                // Primera celda con el factor
+                const factorCell = document.createElement('td');
+                factorCell.textContent = formatFactor(factor);
+                row.appendChild(factorCell);
+
+                // Signos para este factor en cada intervalo
+                const factorSigns = [];
+                intervals.forEach((_, intervalIndex) => {
+                    // Determinar el valor para evaluar en este intervalo
+                    let testValue;
+                    if (intervalIndex === 0) {
+                        // Primer intervalo (-∞, primer cero)
+                        testValue = sortedZeros[0] - 1;
+                    } else if (intervalIndex === intervals.length - 1) {
+                        // Último intervalo (último cero, +∞)
+                        testValue = sortedZeros[sortedZeros.length - 1] + 1;
+                    } else {
+                        // Intervalos intermedios - promedio entre ceros consecutivos
+                        testValue = (sortedZeros[intervalIndex - 1] + sortedZeros[intervalIndex]) / 2;
+                    }
+
+                    // Evaluar el signo del factor en este punto de prueba
+                    let sign;
+                    if (factor.type === 'linear') {
+                        sign = testValue < (-factor.b / factor.a) ? -1 : 1;
+                    } else if (factor.type === 'quadratic') {
+                        sign = factor.a > 0 ? 1 : -1; // Signo constante para factores cuadráticos
+                    }
+                    factorSigns.push(sign);
+
+                    // Añadir a la celda de la tabla
+                    const signCell = document.createElement('td');
+                    signCell.textContent = sign > 0 ? '+' : '-';
+                    signCell.className = sign > 0 ? 'positive' : 'negative';
+                    row.appendChild(signCell);
+                });
+                signsMatrix.push(factorSigns);
+                tbody.appendChild(row);
+            });
+
+            // Fila de resultado (multiplicación de signos)
+            const resultRow = document.createElement('tr');
+            resultRow.className = 'result-row';
+            const resultLabel = document.createElement('td');
+            resultLabel.textContent = 'Producto';
+            resultRow.appendChild(resultLabel);
+
+            // Calcular el producto de signos en cada intervalo
+            intervals.forEach((_, intervalIndex) => {
+                let productSign = 1;
+                for (let i = 0; i < signsMatrix.length; i++) {
+                    productSign *= signsMatrix[i][intervalIndex];
+                }
+                const productCell = document.createElement('td');
+                productCell.textContent = productSign > 0 ? '+' : '-';
+                productCell.className = productSign > 0 ? 'positive' : 'negative';
+                resultRow.appendChild(productCell);
+            });
+            tbody.appendChild(resultRow);
+            table.appendChild(tbody);
+
+            // Agregar tabla al contenedor
+            signTableWrapper.innerHTML = '';
+            signTableWrapper.appendChild(table);
+        }
+
+        // Generar la gráfica
+        function generateGraph(zeros, factors) {
+            // Destruir gráfico anterior si existe
+            if (chart) {
+                chart.destroy();
+            }
+
+            // Determinar el rango de la gráfica
+            const sortedZeros = [...zeros].sort((a, b) => a - b);
+            const min = sortedZeros.length > 0 ? sortedZeros[0] - 5 : -10;
+            const max = sortedZeros.length > 0 ? sortedZeros[sortedZeros.length - 1] + 5 : 10;
+
+            // Generar puntos para la gráfica
+            const points = generatePoints(min, max, factors);
+
+            // Configurar colores según el tema
+            const textColor = currentTheme === 'light' ? '#333333' : '#e0e0e0';
+            const gridColor = currentTheme === 'light' ? '#e0e5ec' : '#333333';
+            const positiveColor = '#4caf50';
+            const negativeColor = '#f44336';
+
+            // Separar los puntos en segmentos positivos y negativos
+            const datasets = [];
+            let currentSign = Math.sign(points[0].y);
+            let currentSegment = [];
+
+            points.forEach(point => {
+                if (Math.sign(point.y) === currentSign || point.y === 0) {
+                    currentSegment.push(point);
+                } else {
+                    // Añadir el segmento actual
+                    datasets.push({
+                        data: currentSegment,
+                        borderColor: currentSign > 0 ? positiveColor : negativeColor,
+                        backgroundColor: 'transparent',
+                        pointRadius: 0,
+                        borderWidth: 2
+                    });
+                    // Iniciar nuevo segmento
+                    currentSign = Math.sign(point.y);
+                    currentSegment = [currentSegment[currentSegment.length - 1], point];
+                }
+            });
+
+            // Añadir el último segmento
+            if (currentSegment.length > 0) {
+                datasets.push({
+                    data: currentSegment,
+                    borderColor: currentSign > 0 ? positiveColor : negativeColor,
+                    backgroundColor: 'transparent',
+                    pointRadius: 0,
+                    borderWidth: 2
+                });
+            }
+
+            // Crear la gráfica
+            chart = new Chart(graphCanvas, {
+                type: 'line',
+                data: {
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'center',
+                            grid: {
+                                color: gridColor
+                            },
+                            ticks: {
+                                color: textColor
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: gridColor
+                            },
+                            ticks: {
+                                color: textColor
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const point = context.raw;
+                                    return `x: ${point.x.toFixed(significantDigits)}, y: ${point.y.toFixed(significantDigits)}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Generar puntos para la gráfica
+        function generatePoints(min, max, factors) {
+            const points = [];
+            const step = (max - min) / 500; // 500 puntos en total
+            for (let x = min; x <= max; x += step) {
+                let y = 1;
+                factors.forEach(factor => {
+                    if (factor.type === 'linear') {
+                        y *= (factor.a * x + factor.b);
+                    } else if (factor.type === 'quadratic') {
+                        y *= (factor.a * x * x + factor.b * x + factor.c);
+                    }
+                });
+                points.push({ x, y });
+            }
+            return points;
+        }
+
+        // Configurar opciones de visualización
+        function setDisplayOption(option) {
+            // Actualizar botones
+            [showBothBtn, showTableBtn, showGraphBtn].forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.add('btn-outline');
+                btn.classList.remove('btn-primary');
+            });
+            switch (option) {
+                case 'both':
+                    showBothBtn.classList.add('active');
+                    showBothBtn.classList.remove('btn-outline');
+                    showBothBtn.classList.add('btn-primary');
+                    signTableContainer.style.display = 'block';
+                    graphContainer.style.display = 'block';
+                    break;
+                case 'table':
+                    showTableBtn.classList.add('active');
+                    showTableBtn.classList.remove('btn-outline');
+                    showTableBtn.classList.add('btn-primary');
+                    signTableContainer.style.display = 'block';
+                    graphContainer.style.display = 'none';
+                    break;
+                case 'graph':
+                    showGraphBtn.classList.add('active');
+                    showGraphBtn.classList.remove('btn-outline');
+                    showGraphBtn.classList.add('btn-primary');
+                    signTableContainer.style.display = 'none';
+                    graphContainer.style.display = 'block';
+                    break;
+            }
+        }
+
+        // Reiniciar la aplicación
+        function resetApplication() {
+            // Limpiar selección de factores
+            factorBtns.forEach(btn => btn.classList.remove('active'));
+            selectedFactors = 0;
+            factors = [];
+            // Ocultar contenedores
+            inputContainer.classList.add('hidden');
+            resultsContainer.classList.add('hidden');
+            // Limpiar inputs
+            factorsInputs.innerHTML = '';
+            // Destruir gráfica si existe
+            if (chart) {
+                chart.destroy();
+                chart = null;
+            }
+            // Limpiar tabla
+            signTableWrapper.innerHTML = '';
+        }
+
+        // Ajustar cifras significativas
+        function adjustSignificantDigits() {
+            const newDigits = prompt('Ingrese el número de cifras significativas (por defecto: 3):', significantDigits);
+            if (newDigits && !isNaN(parseInt(newDigits)) && parseInt(newDigits) > 0) {
+                significantDigits = parseInt(newDigits);
+                alert(`Cifras significativas ajustadas a ${significantDigits}.`);
+            } else {
+                alert('Valor no válido. Las cifras significativas permanecen en 3.');
+            }
+        }
+
+        // Formatear un factor
+        function formatFactor(factor) {
+            if (factor.type === 'linear') {
+                const sign = factor.b >= 0 ? '+' : '-';
+                const absB = Math.abs(factor.b);
+                return `${factor.a}x ${sign} ${absB}`;
+            } else if (factor.type === 'quadratic') {
+                const signB = factor.b >= 0 ? '+' : '-';
+                const signC = factor.c >= 0 ? '+' : '-';
+                const absB = Math.abs(factor.b);
+                const absC = Math.abs(factor.c);
+                return `${factor.a}x² ${signB} ${absB}x ${signC} ${absC}`;
+            }
+        }
+    </script>
+</body>
+</html>
